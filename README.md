@@ -100,6 +100,17 @@ sudo dmesg | grep -Ei 'pinas|lm75|ina226|emc2301|fan|thermal'
 
 overlay 文件存在仅表示已经复制，是否加载成功还需结合启动配置、内核日志及实际温度读取、风扇运行情况判断。
 
+### 5. 安装 SPI 显示屏（可选）
+
+`display` 程序不依赖 Pillow，使用 NumPy 和内置点阵字库显示状态信息。显示屏安装脚本的第一个参数用于选择板型：
+
+```shell
+cd display
+sudo bash ./install.sh rock2a
+```
+
+可选参数为 `rpi5`、`rock2a`、`rock4d` 和 `rock5c`。各板型的 SPI、CS、DC、RST、背光引脚集中在 `display/install.sh` 生成的 `config.py` 中；安装前请根据实际接线修改对应板型的配置。默认值沿用当前树莓派接线示例。
+
 ### 常见问题
 
 - **`dtc: command not found`**：安装 `device-tree-compiler` 后重新执行。
