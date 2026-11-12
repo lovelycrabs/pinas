@@ -31,7 +31,7 @@ sudo apt install -y git device-tree-compiler python3
 ### 2. 下载项目
 
 ```shell
-git clone https://gitee.com/zengqingzheng/pinas.git
+git clone https://github.com/zengqingzheng/pinas.git
 cd pinas
 ```
 
