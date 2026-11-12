@@ -11,6 +11,7 @@ PINAS 支持树莓派5、RAXDA Rock2A、RAXDA Rock4D、RAXDA Rock5C开发板。
 ![示意图](images/image1.jpg)
 ![示意图](images/image2.jpg)
 ![示意图](images/image3.jpg)
+![示意图](images/image4.jpg)
 
 ## 安装指南
 
