@@ -35,6 +35,8 @@ git clone https://github.com/zengqingzheng/pinas.git
 cd pinas
 ```
 
+如果 GitHub 无法访问，可以使用镜像：[https://gitee.com/zengqingzheng/pinas.git](https://gitee.com/zengqingzheng/pinas.git)。
+
 为安装脚本添加执行权限：
 
 ```shell
