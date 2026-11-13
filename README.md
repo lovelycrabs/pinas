@@ -46,6 +46,28 @@ sudo chmod +x install.sh
 ```
 
 后续安装命令均在 `pinas` 项目根目录执行。
+#### 树莓派 5：先开启 PCIe
+
+安装树莓派 5 配置前，请确认 PCIe 已在启动配置中启用。运行 `sudo rpi-eeprom-config --edit`：
+
+```shell
+sudo rpi-eeprom-config --edit
+```
+
+在文件末尾添加以下配置（如果已有相同配置则不要重复添加）：
+
+```ini
+BOOT_ORDER=0xf416
+PCIE_PROBE=1
+```
+
+其中 PCIE_PROBE=1 用于从非 HAT+ 设备探测 PCIe 存储设备。保存后重启树莓派使配置生效：
+
+```shell
+sudo reboot
+```
+
+重新登录后再执行树莓派 5 的安装命令。安装脚本也会检查并写入上述 PCIe 配置；提前配置并重启可以先确认 PCIe 已正常启用。
 
 ### 3. 选择开发板并安装
 
