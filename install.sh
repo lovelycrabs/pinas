@@ -68,3 +68,6 @@ case "$board" in
         exit 2
         ;;
 esac
+echo "Install dispay service for board: $board"
+
+echo "Install script completed successfully for board: $board"
