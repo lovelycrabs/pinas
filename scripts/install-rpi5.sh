@@ -31,4 +31,3 @@ cp -f /boot/firmware/config.txt /boot/firmware/config.txt.bak
 apt install -y python3
 python3 "${repo_root}/utils/rpi5-config.py"
 echo 'firmware config end'
-echo 'install success, please reboot system!'

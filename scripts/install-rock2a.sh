@@ -24,4 +24,3 @@ fi
 cp -f ${dts_dir}/pinas-sensors.dtbo /boot/overlays/
 
 echo 'install dtbo end'
-echo 'install success, please reboot system!'
