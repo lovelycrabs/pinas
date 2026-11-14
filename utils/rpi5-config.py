@@ -61,6 +61,7 @@ if __name__=='__main__':
     read_config()
     config_add(None, 'dtparam=i2c_arm=on')
     config_add(None, 'dtparam=spi=on')
+    config_add(None, 'dtoverlay=spi0-1cs')
     config_add("all", 'dtparam=pciex1=on')
     config_add("all", 'dtparam=pciex1_gen=2')
     config_add("all", 'dtoverlay=pciex1-compat-pi5,no-mip')
