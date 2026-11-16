@@ -1,8 +1,14 @@
 /dts-v1/;
 /plugin/;
-#include <dt-bindings/thermal/thermal.h>
 
 / {
+	metadata {
+		title = "Enable PINAS-SENSORS";
+		compatible = "radxa,rock-5a", "radxa,rock-5c", "radxa,rock-5d", "radxa,cm5-rpi-cm4-io";
+		category = "misc";
+		exclusive = "I2C8-M2";
+		description = "Enable PINAS-SENSORS use I2C8";
+	};
 
 	fragment@0 {
 		target = <&i2c8>;
@@ -33,6 +39,7 @@
             };
 		};
 	};
+
 	fragment@1 {
 		target-path = "/thermal-zones";
 		__overlay__ {
@@ -72,7 +79,7 @@
 					};
 					melt {
 						trip = <&temp_crit>;
-						cooling-device = <&emc2301 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+						cooling-device = <&emc2301 0xffffffff 0xffffffff>;
 					};
 				};
 			};

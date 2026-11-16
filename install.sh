@@ -72,3 +72,4 @@ echo "Install dispay service for board: $board"
 git clone https://github.com/lovelycrabs/pinas-display.git
 bash pinas-display/install.sh --board $board
 echo "Install script completed successfully for board: $board"
+echo "Please reboot the system to apply changes."
