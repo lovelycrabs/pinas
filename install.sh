@@ -69,7 +69,9 @@ case "$board" in
         ;;
 esac
 echo "Install dispay service for board: $board"
-git clone https://github.com/lovelycrabs/pinas-display.git
-bash pinas-display/install.sh --board $board
+if [[ ! -d "${cur_dir}/pinas-display" ]]; then
+    git clone https://github.com/lovelycrabs/pinas-display.git
+fi
+bash "${cur_dir}/pinas-display/install.sh" --board "$board"
 echo "Install script completed successfully for board: $board"
 echo "Please reboot the system to apply changes."
