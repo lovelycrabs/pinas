@@ -90,6 +90,7 @@ sudo chmod +x install.sh
 ```
 
 后续安装命令均在 `pinas` 项目根目录执行。
+
 #### 树莓派 5：先开启 PCIe
 
 安装树莓派 5 配置前，请确认 PCIe 已在启动配置中启用。运行 `sudo rpi-eeprom-config --edit`：
