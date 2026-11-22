@@ -34,7 +34,7 @@ def read_config():
 def line_exists(selection, n):
     for line in config_lines:
         #print(line.line)
-        if line.selection == selection and line.line.strip() == n.strip():
+        if line.selection == selection and line.line.strip().startswith(n):
             return True
     return False
 

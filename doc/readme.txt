@@ -6,7 +6,7 @@ PINAS 解压与安装说明
 
 2. 进入目录
 进入解压后的 pinas-package 目录：
-  cd pinas-package
+  cd pinas
 
 3. 安装依赖
   sudo apt update
