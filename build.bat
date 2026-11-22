@@ -3,7 +3,7 @@ setlocal
 
 set "ROOT=%~dp0"
 set "DIST=%ROOT%dist"
-set "PACKAGE=%DIST%\pinas-package"
+set "PACKAGE=%DIST%\pinas"
 set "DISPLAY=%PACKAGE%\pinas-display"
 set "ZIP=%DIST%\pinas.zip"
 
@@ -20,7 +20,7 @@ echo Cloning pinas-display...
 git clone https://github.com/lovelycrabs/pinas-display.git "%DISPLAY%"
 if errorlevel 1 exit /b 1
 if exist "%ZIP%" del /q "%ZIP%"
-tar.exe -a -c -f "%ZIP%" -C "%DIST%" pinas-package
+tar.exe -a -c -f "%ZIP%" -C "%DIST%" pinas
 if errorlevel 1 exit /b 1
 copy /y "%ROOT%doc\readme.txt" "%DIST%\readme.txt" >nul
 if errorlevel 1 exit /b 1
@@ -28,3 +28,4 @@ if errorlevel 1 exit /b 1
 echo Build completed: %ZIP%
 echo Installation guide copied: %DIST%\\readme.txt
 endlocal
+

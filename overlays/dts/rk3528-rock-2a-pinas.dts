@@ -1,0 +1,97 @@
+
+/dts-v1/;
+
+
+#include <dt-bindings/thermal/thermal.h>
+#include "rk3528-rock-2a.dts"
+
+
+/ {
+	thermal-zones {
+		sata_thermal: sata-thermal {
+			polling-delay-passive = <1000>;
+			polling-delay = <1000>;
+			thermal-sensors = <&lm75b>;
+			sensor_trips: trips {
+				temp_crit: temp-crit {
+					temperature = <65000>;
+					hysteresis = <0>;
+					type = "critical";
+				};
+				temp_hot: temp-hot {
+					temperature = <42000>;
+					hysteresis = <3000>;
+					type = "active";
+				};
+
+				temp_vhot: temp-vhot {
+					temperature = <55000>;
+					hysteresis = <5000>;
+					type = "active";
+				};
+			};
+
+			cooling_maps: cooling-maps {
+				hot {
+					trip = <&temp_hot>;
+					cooling-device = <&emc2301 3 3>;
+				};
+
+
+				vhot {
+					trip = <&temp_vhot>;
+					cooling-device = <&emc2301 4 7>;
+				};
+				melt {
+					trip = <&temp_crit>;
+					cooling-device = <&emc2301 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+				};
+			};
+		};
+	};
+};
+
+&i2c0 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c0m1_xfer>;
+    emc2301: emc2301@2f {
+        compatible = "microchip,emc2301";
+        reg = <0x2f>;
+        #address-cells = <1>;
+        #size-cells = <0>;
+        #cooling-cells = <2>;
+        microchip,pwm-separate;
+        microchip,cooling-levels = <10>;
+
+        channel@0 {
+            reg = <0>;
+            pwm-min = <0>;
+        };
+    };
+    lm75b: lm75b@48 {
+        compatible = "national,lm75b";
+        reg = <0x48>;
+        #thermal-sensor-cells = <0>;
+    };
+    ina226@40 {
+        compatible = "ti,ina226";
+        reg = <0x40>;
+        shunt-resistor = <5000>;
+    };
+};
+
+&spi0 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+	max-freq = <50000000>;
+	num-cs = <2>;
+
+	spidev@0 {
+		compatible = "rockchip,spidev";
+		status = "okay";
+		reg = <0>;
+		spi-max-frequency = <50000000>;
+	};
+};

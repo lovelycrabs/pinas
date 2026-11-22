@@ -8,26 +8,43 @@ fi
 
 KERNEL_RELEASE="$(uname -r)"
 KERNEL_BUILD="/lib/modules/${KERNEL_RELEASE}/build"
-WORK_DIR="${TMPDIR:-/tmp}/pinas-ina226-${KERNEL_RELEASE}"
-MODULE_PATH="/lib/modules/${KERNEL_RELEASE}/extra/ina2xx.ko"
+WORK_DIR="${TMPDIR:-/tmp}/pinas-hwmon-${KERNEL_RELEASE}"
+MODULE_DIR="/lib/modules/${KERNEL_RELEASE}/kernel/drivers/hwmon"
+DRIVERS=(ina2xx lm75 emc2305)
 
 command -v apt-get >/dev/null || { echo "apt-get is required." >&2; exit 1; }
-
-driver_available() {
-    modinfo ina2xx >/dev/null 2>&1 ||
-        [[ -d /sys/bus/i2c/drivers/ina2xx ]] ||
-        [[ -d /sys/module/ina2xx ]]
+configure_emc2305_autoload() {
+    local modules_load_conf="/etc/modules-load.d/emc2305.conf"
+    install -d -m 0755 /etc/modules-load.d
+    printf '%s\n' emc2305 > "${modules_load_conf}"
 }
 
-if driver_available; then
-    echo "ina2xx driver is already available for ${KERNEL_RELEASE}."
-    modprobe ina2xx 2>/dev/null || true
+driver_available() {
+    local driver="$1"
+    modinfo "${driver}" >/dev/null 2>&1 ||
+        [[ -d "/sys/bus/i2c/drivers/${driver}" ]] ||
+        [[ -d "/sys/module/${driver}" ]]
+}
+
+MISSING_DRIVERS=()
+for driver in "${DRIVERS[@]}"; do
+    if driver_available "${driver}"; then
+        echo "${driver} driver is already available for ${KERNEL_RELEASE}."
+        modprobe "${driver}" 2>/dev/null || true
+    else
+        MISSING_DRIVERS+=("${driver}")
+    fi
+done
+
+if [[ "${#MISSING_DRIVERS[@]}" -eq 0 ]]; then
+    configure_emc2305_autoload
+    modprobe emc2305 2>/dev/null || true
     exit 0
 fi
 
-echo "Installing kernel headers and linux-source..."
+echo "Installing kernel headers and download tools..."
 apt-get update
-apt-get install -y "linux-headers-${KERNEL_RELEASE}" build-essential linux-source
+apt-get install -y "linux-headers-${KERNEL_RELEASE}" build-essential ca-certificates curl
 
 if [[ ! -f "${KERNEL_BUILD}/Makefile" ]]; then
     echo "Kernel headers unavailable: ${KERNEL_BUILD}" >&2
@@ -37,39 +54,54 @@ fi
 rm -rf "${WORK_DIR}"
 mkdir -p "${WORK_DIR}"
 
-SOURCE_ARCHIVE="$(find /usr/src -maxdepth 1 -type f \
-    \( -name 'linux-source-*.tar.*' -o -name 'linux-*.tar.*' \) \
-    | sort -V | tail -n 1)"
+KERNEL_VERSION="$(printf '%s\n' "${KERNEL_RELEASE}" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')"
+SOURCE_DIR="$(pwd)"
+SOURCE_ARCHIVE="${SOURCE_DIR}/linux-${KERNEL_VERSION}.tar.xz"
 
-if [[ -z "${SOURCE_ARCHIVE}" ]]; then
-    echo "linux-source archive was not found in /usr/src." >&2
+if [[ ! -f "${SOURCE_ARCHIVE}" ]]; then
+    SOURCE_URL="https://mirrors.aliyun.com/linux-kernel/v${KERNEL_VERSION%%.*}.x/linux-${KERNEL_VERSION}.tar.xz"
+    echo "Linux source not found in ${SOURCE_DIR}; downloading ${SOURCE_URL}..."
+    curl --fail --location --retry 3 --output "${SOURCE_ARCHIVE}" "${SOURCE_URL}"
+else
+    echo "Using Linux source archive: ${SOURCE_ARCHIVE}"
+fi
+
+SOURCE_ROOT="$(tar -tf "${SOURCE_ARCHIVE}" | awk -F/ 'NF > 1 && !found { print $1; found=1 }')"
+if [[ -z "${SOURCE_ROOT}" ]]; then
+    echo "Unable to determine the source root in ${SOURCE_ARCHIVE}." >&2
     exit 1
 fi
 
-echo "Extracting drivers/hwmon/ina2xx.c from ${SOURCE_ARCHIVE}..."
-case "${SOURCE_ARCHIVE}" in
-    *.tar.xz)  tar -xJf "${SOURCE_ARCHIVE}" -C "${WORK_DIR}" --wildcards '*/drivers/hwmon/ina2xx.c' ;;
-    *.tar.bz2) tar -xjf "${SOURCE_ARCHIVE}" -C "${WORK_DIR}" --wildcards '*/drivers/hwmon/ina2xx.c' ;;
-    *.tar.gz)  tar -xzf "${SOURCE_ARCHIVE}" -C "${WORK_DIR}" --wildcards '*/drivers/hwmon/ina2xx.c' ;;
-    *) echo "Unsupported source archive: ${SOURCE_ARCHIVE}" >&2; exit 1 ;;
-esac
+echo "Extracting drivers: ${MISSING_DRIVERS[*]}..."
+SOURCE_FILES=()
+for driver in "${MISSING_DRIVERS[@]}"; do
+    SOURCE_FILES+=("${SOURCE_ROOT}/drivers/hwmon/${driver}.c")
+    if [[ "${driver}" == "lm75" ]]; then
+        SOURCE_FILES+=("${SOURCE_ROOT}/drivers/hwmon/lm75.h")
+    fi
+done
+tar -xJf "${SOURCE_ARCHIVE}" -C "${WORK_DIR}" "${SOURCE_FILES[@]}"
 
-SOURCE_FILE="$(find "${WORK_DIR}" -path '*/drivers/hwmon/ina2xx.c' -type f | head -n 1)"
-if [[ -z "${SOURCE_FILE}" ]]; then
-    echo "ina2xx.c was not found in ${SOURCE_ARCHIVE}." >&2
-    exit 1
-fi
-cp "${SOURCE_FILE}" "${WORK_DIR}/ina2xx.c"
+: > "${WORK_DIR}/Makefile"
+for driver in "${MISSING_DRIVERS[@]}"; do
+    cp "${WORK_DIR}/${SOURCE_ROOT}/drivers/hwmon/${driver}.c" "${WORK_DIR}/${driver}.c"
+    if [[ "${driver}" == "lm75" ]]; then
+        cp "${WORK_DIR}/${SOURCE_ROOT}/drivers/hwmon/lm75.h" "${WORK_DIR}/lm75.h"
+    fi
+    printf 'obj-m += %s.o\n' "${driver}" >> "${WORK_DIR}/Makefile"
+done
 
-cat > "${WORK_DIR}/Makefile" <<'EOF'
-obj-m += ina2xx.o
-EOF
-
-echo "Building INA226 driver for ${KERNEL_RELEASE}..."
+echo "Building drivers for ${KERNEL_RELEASE}: ${MISSING_DRIVERS[*]}..."
 make -C "${KERNEL_BUILD}" M="${WORK_DIR}" modules
-install -D -m 0644 "${WORK_DIR}/ina2xx.ko" "${MODULE_PATH}"
-depmod -a "${KERNEL_RELEASE}"
-modprobe -r ina2xx 2>/dev/null || true
-modprobe ina2xx
 
-echo "INA226 driver installed successfully: ${MODULE_PATH}"
+for driver in "${MISSING_DRIVERS[@]}"; do
+    install -D -m 0644 "${WORK_DIR}/${driver}.ko" "${MODULE_DIR}/${driver}.ko"
+done
+
+depmod -a "${KERNEL_RELEASE}"
+configure_emc2305_autoload
+for driver in "${MISSING_DRIVERS[@]}"; do
+    modprobe -r "${driver}" 2>/dev/null || true
+    modprobe "${driver}"
+    echo "${driver} driver installed successfully: ${MODULE_DIR}/${driver}.ko"
+done

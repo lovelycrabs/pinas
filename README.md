@@ -178,6 +178,69 @@ sudo bash ./install.sh -b rpi5
 
 可选参数为 `rpi5`、`rock2a`、`rock4d` 和 `rock5c`。各板型的 SPI、CS、DC、RST、背光引脚集中在 `pinas-display/install.sh` 生成的 `config.py` 中；安装前请根据实际接线修改对应板型的配置。默认值沿用当前树莓派接线示例。
 
+### 7. 手动配置
+
+`install.sh` 目前主要适配官方提供的系统和启动配置方式。如果使用 Armbian 等第三方系统，启动分区路径、设备树加载方式和 overlay 配置项可能不同，安装脚本可能无法成功执行。此时可以按照下面的步骤手动配置。
+
+#### 1. 开启 I²C 和 SPI
+
+请先按照上面的[连接说明](#1-连接说明)完成硬件连接，并在系统中开启开发板实际使用的 I²C 和 SPI 控制器。不同系统的配置入口可能不同，通常可以使用系统配置工具（例如 `armbian-config`、`rsetup`）启用，也可以按照该系统的启动配置文档修改配置文件。
+
+启用后确认对应设备已经出现：
+
+```shell
+ls /dev/i2c-*
+ls /dev/spidev*
+```
+
+如果设备节点不存在，先检查内核模块、设备树和启动配置，不要继续编译 PINAS overlay。
+
+#### 2. 编译 PINAS 传感器 overlay
+
+在 PINAS 项目根目录执行，`<开发板>` 替换为 `rpi5`、`rock2a`、`rock4d` 或 `rock5c`：
+
+```shell
+cd pinas/overlays/<开发板>
+dtc -I dts -O dtb -o pinas-sensors.dtbo pinas-sensors.dts
+```
+
+例如 ROCK 2A：
+
+```shell
+cd pinas/overlays/rock2a
+dtc -I dts -O dtb -o pinas-sensors.dtbo pinas-sensors.dts
+```
+
+#### 3. 加载 overlay
+
+将生成的 `pinas-sensors.dtbo` 复制到系统的 overlay 目录，并使用系统支持的 `fdtoverlay` 或启动配置方式加载。overlay 目录和基础 DTB 文件的位置会因系统而不同，常见位置包括 `/boot/firmware/overlays/`、`/boot/overlays/`、`/boot/dtbo/` 和 `/boot/dtb/rockchip/overlay/`。
+
+如果系统要求直接合并设备树，可以先备份基础 DTB，再执行类似下面的命令；请根据实际系统替换输入、输出和 overlay 路径：
+
+```shell
+sudo fdtoverlay -i /boot/dtb/<基础设备树>.dtb \
+  -o /boot/dtb/<基础设备树>-pinas.dtb \
+  /boot/dtbo/pinas-sensors.dtbo
+```
+
+如果系统通过启动配置文件加载 overlay，则将 `pinas-sensors.dtbo` 放入系统指定的 overlay 目录，并在启动配置中添加对应的 overlay 配置。例如树莓派通常使用：
+
+```ini
+dtparam=i2c_arm=on
+dtparam=spi=on
+dtoverlay=pinas-sensors
+```
+
+Rock 系列和 Armbian 的配置项名称及文件位置可能不同，请以当前系统的设备树加载方式为准。完成配置后重启，并按[重启并检查](#5-重启并检查)确认传感器、风扇和 SPI 设备已经正常加载。
+
+#### 4. 安装驱动
+
+有些系统内核、模块缺少(EMC2305、LM75、INA2xx驱动)，需要执行下面命令检查和安装缺失的驱动：
+
+```shell
+sudo bash ./scripts/install-driver.sh
+```
+
 ### 常见问题
 
 - **`dtc: command not found`**：安装 `device-tree-compiler` 后重新执行。
@@ -185,3 +248,4 @@ sudo bash ./install.sh -b rpi5
 - **`unsupported board`**：使用上表中的小写参数，可通过 `--help` 查看支持列表。
 - **提示启动目录或配置文件不存在**：核对当前系统的启动分区挂载位置，不要仅创建空目录后继续安装。
 - **重启后没有传感器或风扇功能**：确认选择了正确板型、overlay 已启用，并检查硬件连接、内核驱动和 `dmesg` 中的错误。
+
