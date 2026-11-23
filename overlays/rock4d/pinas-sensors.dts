@@ -48,7 +48,7 @@
 				thermal-sensors = <&lm75b>;
 				sensor_trips: trips {
 					temp_crit: temp-crit {
-						temperature = <65000>;
+						temperature = <60000>;
 						hysteresis = <0>;
 						type = "critical";
 					};
@@ -57,10 +57,15 @@
 						hysteresis = <3000>;
 						type = "active";
 					};
+					temp_mhot: temp-mhot {
+						temperature = <45000>;
+						hysteresis = <3000>;
+						type = "active";
+					};
 
 					temp_vhot: temp-vhot {
-						temperature = <55000>;
-						hysteresis = <5000>;
+						temperature = <50000>;
+						hysteresis = <3000>;
 						type = "active";
 					};
 				};
@@ -71,10 +76,13 @@
 						cooling-device = <&emc2301 3 3>;
 					};
 
-
+					mhot {
+						trip = <&temp_mhot>;
+						cooling-device = <&emc2301 4 4>;
+					};
 					vhot {
 						trip = <&temp_vhot>;
-						cooling-device = <&emc2301 4 7>;
+						cooling-device = <&emc2301 5 7>;
 					};
 					melt {
 						trip = <&temp_crit>;
