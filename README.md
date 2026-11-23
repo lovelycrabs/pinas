@@ -250,3 +250,6 @@ sudo bash ./scripts/install-driver.sh
 - **提示启动目录或配置文件不存在**：核对当前系统的启动分区挂载位置，不要仅创建空目录后继续安装。
 - **重启后没有传感器或风扇功能**：确认选择了正确板型、overlay 已启用，并检查硬件连接、内核驱动和 `dmesg` 中的错误。
 
+## 3D 机箱打印
+
+见[https://makerworld.com/zh/models/1025343-raspberry-pi-5-rock-5c-nas-case-4-plates-2-5-inch#profileId-1007434](https://makerworld.com/zh/models/1025343-raspberry-pi-5-rock-5c-nas-case-4-plates-2-5-inch#profileId-1007434)
