@@ -253,3 +253,5 @@ sudo bash ./scripts/install-driver.sh
 ## 3D 机箱打印
 
 见[https://makerworld.com/zh/models/1025343-raspberry-pi-5-rock-5c-nas-case-4-plates-2-5-inch#profileId-1007434](https://makerworld.com/zh/models/1025343-raspberry-pi-5-rock-5c-nas-case-4-plates-2-5-inch#profileId-1007434)
+
+3D 打印机箱 需要根据打印材料的收缩率适当放大模型的比例， 比如使用PTEG作为打印材料时，最好把模型放大100.3%-100.4%再进行打印。
